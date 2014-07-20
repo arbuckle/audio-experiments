@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html ng-app="audioj" ng-controller="AppCtrl">
+  <head>
+    <title ng-bind="pageTitle"></title>
+
+    <!-- seo tags -->
+    <meta name="description" content="Audio Applications">
+
+    <!-- font awesome from BootstrapCDN -->
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+
+    <!-- compiled CSS --><% styles.forEach( function ( file ) { %>
+    <link rel="stylesheet" type="text/css" href="<%= file %>" /><% }); %>
+
+    <!-- compiled JavaScript --><% scripts.forEach( function ( file ) { %>
+    <script type="text/javascript" src="<%= file %>"></script><% }); %>
+  </head>
+  <body>
+    <header class="navbar navbar-default navbar-fixed-top" role="banner">
+      <div class="container">
+        <div class="navbar-header">
+          <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".bs-navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a href="/" class="navbar-brand">Audio Games</a>
+        </div>
+
+        <nav class="collapse navbar-collapse" role="navigation">
+  
+          <ul class="nav navbar-nav">
+            <li ui-route="/tones" ng-class="{active:$uiRoute}">
+              <a href="/tones">Tones</a>
+            </li>
+          </ul>
+        </nav>
+  
+      </div>
+    </header>
+
+    <main class="container main" ui-view="main">
+      Exception
+    </main>
+
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-inner">
+          <ul class="footer-links muted">
+            <li>(c) 2014 David Arbuckle</li>
+            <li>&middot;</li>
+            <li>Smile</li>
+          </ul>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

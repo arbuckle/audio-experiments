@@ -1,0 +1,15 @@
+{
+  "name": "grunt-contrib-less",
+  "homepage": "https://github.com/gruntjs/grunt-contrib-less",
+  "version": "0.9.0",
+  "_release": "0.9.0",
+  "_resolution": {
+    "type": "version",
+    "tag": "v0.9.0",
+    "commit": "aff85090cd05ee61ff0fa331953aac342662251f"
+  },
+  "_source": "git://github.com/gruntjs/grunt-contrib-less.git",
+  "_target": "~0.9.0",
+  "_originalSource": "grunt-contrib-less",
+  "_direct": true
+}
