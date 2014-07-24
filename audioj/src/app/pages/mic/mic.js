@@ -41,6 +41,29 @@ angular.module( 'pages.mic', [
         canvasWaveformCtx = canvasWaveform.getContext("2d");
 
     var analyser = audioCtx.createAnalyser();
+    var buf = audioCtx.createScriptProcessor(4096, 2, 2);
+
+
+    var printEvent = true;
+    buf.onaudioprocess = function(e){
+      if (printEvent) {
+        console.log(e);
+        printEvent = false;
+      }
+      var chan, sample,
+          outData,
+          inData,
+          inputBuffer = e.inputBuffer,
+          outputBuffer = e.outputBuffer,
+          dLen = outputBuffer.length;
+      for (chan=0; chan < outputBuffer.numberOfChannels; chan ++) {
+        inData = inputBuffer.getChannelData(chan);
+        outData = outputBuffer.getChannelData(chan);
+        for (sample=0; sample < dLen; sample ++) {
+          outData[sample] = inData[sample];
+        }
+      }
+    };
 
     navigator.getUserMedia(
       {
@@ -53,7 +76,8 @@ angular.module( 'pages.mic', [
         gainNode.gain.value = 0;
 
         var source = audioCtx.createMediaStreamSource(stream);
-        source.connect(analyser);
+        source.connect(buf);
+        buf.connect(analyser);
         analyser.connect(gainNode);
 
         gainNode.connect(audioCtx.destination);
@@ -115,7 +139,7 @@ function visualize() {
 
         for(var i = 0; i < bufferLength; i++) {
 
-          //why 128?
+          //why 128?  is this some sort of averaging / easing coefficient?
           v = dataArray[i] / 128.0;
 
           if (target == 1) {
@@ -125,7 +149,7 @@ function visualize() {
             y = (-v * HEIGHT/2) + (HEIGHT-0.2*HEIGHT); // fixesthe line at the bottom and reverses the Y axis.
           }
 
-          // idk what thsis is doing
+          // draws the line.
           if(i === 0) {
             canvasCtx.moveTo(x, y);
           } else {
