@@ -17,6 +17,8 @@ angular.module( 'pages.mic', [
 
   .controller( 'MicCtrl', function MicController( $scope ) {
 
+    var audioCtx;
+
     if (window.AudioContext) {
       audioCtx = new window.AudioContext();
     } else if (window.webkitAudioContext) {
@@ -34,11 +36,19 @@ angular.module( 'pages.mic', [
     }
 
 
-    var audioCtx,
+
+
+    var sampleRate = 44100, // read-only value of audioCtx
         canvasFreq = document.getElementById("Frequency"),
         canvasFreqCtx = canvasFreq.getContext("2d"),
         canvasWaveform = document.getElementById("Oscilliscope"),
         canvasWaveformCtx = canvasWaveform.getContext("2d");
+
+    // unfortunately, this is read-only :(
+    // there's a resampling library available as a component of XaudioJS which interpolates the PCM data to and fro
+    // sampling rates, which may be something to explore in the event that I buy a HF microphone and start recording
+    // neighborhood bats.
+    audioCtx.sampleRate = sampleRate;
 
     var analyser = audioCtx.createAnalyser();
     var scriptBufferSize = 4096;
@@ -148,7 +158,7 @@ angular.module( 'pages.mic', [
       //console.log(freq.reduce(sum) / freq.length);
       //console.log("variance", variance);
 
-      frequencyBin.push(44100 / (deltas.reduce(sum) / deltas.length) / 2 );
+      frequencyBin.push(sampleRate / (deltas.reduce(sum) / deltas.length) / 2 );
       if (frequencyBin.length > 5) {
         frequencyBin.shift();
       }
