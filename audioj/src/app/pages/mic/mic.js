@@ -41,28 +41,121 @@ angular.module( 'pages.mic', [
         canvasWaveformCtx = canvasWaveform.getContext("2d");
 
     var analyser = audioCtx.createAnalyser();
-    var buf = audioCtx.createScriptProcessor(4096, 2, 2);
+    var scriptBufferSize = 4096;
+    var buf = audioCtx.createScriptProcessor(scriptBufferSize, 2, 2);
 
 
-    var printEvent = true;
-    buf.onaudioprocess = function(e){
-      if (printEvent) {
-        console.log(e);
-        printEvent = false;
+
+    /*
+    * TODO:
+    * 1.  Implement an autocorrelation algorithm to extract the natural tone from the PCM data.
+    * 2.  Implement a spectrogram style visualization in which Khz is charted on the Y axis against time on the X axis.
+    *     http://www.wildlife-sound.org/equipment/technote/micdesigns/ultrasonic.html
+    * 3.  Research experiments with Morse, AM, FM for data transmission
+    * 4.  Author own oscilloscope to unlock access to frequencies in excess of 24khz
+    *
+    * */
+
+
+    /*
+     * Autocorrelation:
+     *
+     * 1.  you take the sum of the dot-product of the input buffer with itself.  ie, sum(inData * inData)
+     * 2.  you take the sum of the dot-product of the input buffer, shifted N samples (lag).  ie sum(inData[-N+1:-N] * inData[N:])
+     *      - noting that a higher lag value is required to detect the pitch of a lower frequency.
+     *      - PCM takes 2 samples for each Hz - 44100 sample rate is required to sample the variance between the crest and trough of a 22050Hz sine wave.
+     *      - (1000ms / 40Hz) * 2 = 50 samples
+     *      - (1000ms / 19000Hz) * 2 = 0.1 samples??
+     * 3.  For each script buffer sampling period, N==50.
+     * 4.  Walk the array of correlate values for each N offset and estimate the decimal # of samples between peak and trough
+     * 5.  Divide this estimate into 44,100
+     * 6.  Store the estimate as well as the variance (-1 to +1) in an array
+     * 7.  Every second or so, take the moving average of the peak observed variance in all the data processed during that period.
+     * 8.  This is your fundamental frequency.
+     */
+    var correlate = function(inData, lag) {
+      var i,
+          inCopy,
+          bin = 0;
+
+      inCopy = inData.subarray(lag);
+      inData = inData.subarray(0, (-1*lag || undefined));
+
+      for (i=0; i < scriptBufferSize-lag; i ++) {
+        bin += inData[i] * inCopy[i];
       }
+
+      return bin;
+    };
+
+    var frequencyBin = [];
+    buf.onaudioprocess = function(e){
+
       var chan, sample,
           outData,
           inData,
           inputBuffer = e.inputBuffer,
           outputBuffer = e.outputBuffer,
           dLen = outputBuffer.length;
+
+      // array filtering functions.
+      var sum = function(a,b) {return a+b;};
+      var zeros = function(a) {return a!==0;};
+
+
+      // Writing the input data directly to the output buffer.
+      // At some point, this may be a good place to plug in streaming measurement functions.
       for (chan=0; chan < outputBuffer.numberOfChannels; chan ++) {
         inData = inputBuffer.getChannelData(chan);
         outData = outputBuffer.getChannelData(chan);
-        for (sample=0; sample < dLen; sample ++) {
+        for (sample = 0; sample < dLen; sample++) {
           outData[sample] = inData[sample];
         }
       }
+
+
+      // Autocorrelation algorithm begins here.
+      //
+      var c,
+          channelData = inputBuffer.getChannelData(0),
+          correlateValues = [0],
+          d = 0,
+          variance = [],
+          deltas = [];
+      for (var i=1; i < 201; i ++) {
+        c = correlate(channelData, i);
+        correlateValues.push(c);
+        if (c < correlateValues[i-1]) {
+          d += 1;
+        } else {
+          deltas.push(d);
+          variance.push(correlateValues[i-d] - correlateValues[i-1]);
+          d = 0;
+        }
+      }
+
+
+      // Removing zero values from list of correlated deltas.
+      // The delta calculation component only measures the delta between the top of a wave and the downslope.
+      // This is technically an oversight, but the frequency measurements are good enough without accounting for the
+      // upward slope that it's easier to filter the array on the basis of
+      deltas = deltas.filter(zeros);
+
+      //console.log("values", correlateValues);
+      //console.log("deltas", deltas);
+      //console.log("average delta", deltas.reduce(sum) / deltas.length );
+      //console.log("frequency estimate", 44100 / (deltas.reduce(sum) / deltas.length) / 2 );
+      //console.log(freq.reduce(sum) / freq.length);
+      //console.log("variance", variance);
+
+      frequencyBin.push(44100 / (deltas.reduce(sum) / deltas.length) / 2 );
+      if (frequencyBin.length > 5) {
+        frequencyBin.shift();
+      }
+      $scope.$apply(function(scope){
+        scope.fundamental_frequency = Math.round(frequencyBin.reduce(sum) / frequencyBin.length);
+      });
+
     };
 
     navigator.getUserMedia(
