@@ -53,6 +53,12 @@ angular.module("audioj")
      * Public methods
      */
     return {
+      aaa: function(){
+        setInterval(function(){
+          //gainNode.gain.value = (gainNode.gain.value==1) ? 0 : 1;
+          //console.log(gainNode.gain.value);
+        }, 40);
+      },
       setFrequency: function(freq) {
         oscillator.frequency.value = freq;
       },

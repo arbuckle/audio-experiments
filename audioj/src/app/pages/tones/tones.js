@@ -20,9 +20,14 @@ angular.module( 'pages.tones', [
     $scope.freq = 440;
     $scope.volume = 0.5;
     $scope.mute = true;
+    $scope.aaa = false;
 
     ToneService.init();
 
+
+    $scope.$watch("aaa", function(current, previous) {
+      ToneService.aaa();
+    });
 
     $scope.$watch("freq", function(current, previous) {
       ToneService.setFrequency($scope.freq);
