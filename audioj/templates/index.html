@@ -1,0 +1,9 @@
+{{ define "home" }}
+    {{ template "header" . }}
+
+        <main class="container main" ui-view="main">
+          This thing makes noise and listens to noise.
+        </main>
+
+    {{ template "footer" . }}
+{{ end }}
