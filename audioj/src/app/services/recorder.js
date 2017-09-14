@@ -191,7 +191,15 @@ angular.module("audioj")
 
 
         // determines the precision of the console display
-        analyser.fftSize = 2048;
+        // analyser.fftSize = 8192; 
+        // an fft sized @ 8192 will yeild 4096 frequency buckets for your 44100/2 available frequencies
+        // this means that each bucket represents a window with 5Hz of accuracy.
+        // to find the specific bucket for a frequency, 16000/(44100/2) * 4096
+
+        analyser.fftSize = 32768; 
+        // an fft sized @ 32768 will yeild 16384 frequency buckets for your 44100/2 available frequencies
+        // this means that each bucket represents a window with 1.34Hz of accuracy.
+        // to find the specific bucket for a frequency, 16000/(44100/2) * 16384
 
         // determines some sort of data averaging between frames.  setting to 0. default is 0.8.
         analyser.smoothingTimeConstant = 0;
@@ -223,15 +231,15 @@ angular.module("audioj")
 
           canvasCtx.beginPath();
 
-          var sliceWidth = WIDTH * 1.0 / bufferLength;
+          var sliceWidth = WIDTH * 1.0 / (13000-12600);
           var v,
               y,
               x = 0;
 
-          for(var i = 0; i < bufferLength; i++) {
+          for(var i = 12600; i < 13000; i++) {
 
             //why 128?  is this some sort of averaging / easing coefficient?
-            v = dataArray[i] / 128.0;
+            v = dataArray[i] / 32.0;
 
             if (target == 1) {
               y = v * HEIGHT/2; // centers the line within the oscilliscope.
@@ -241,7 +249,7 @@ angular.module("audioj")
             }
 
             // draws the line.
-            if(i === 0) {
+            if(i === 12600) {
               canvasCtx.moveTo(x, y);
             } else {
               canvasCtx.lineTo(x, y);
